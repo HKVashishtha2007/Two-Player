@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pixel Football Showdown — 1v1 Retro Football Game</title>
+  <meta name="description" content="A fast-paced, retro 2D pixel-art 1v1 football showdown playable in your browser. Single-player vs smart AI and 2-player local multiplayer!">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game-wrapper">
+    <!-- Game Canvas -->
+    <canvas id="game-canvas" width="960" height="540"></canvas>
+
+    <!-- UI Overlay Layer -->
+    <div id="ui-layer">
+
+      <!-- In-Game Top Bar HUD -->
+      <header id="in-game-hud" class="hud-bar hidden">
+        <div class="team-badge left-team">
+          <span class="team-color-dot" id="hud-p1-color"></span>
+          <span class="team-name" id="hud-p1-name">BLUE</span>
+        </div>
+        <div class="scoreboard-container">
+          <div class="score-box">
+            <span id="score-p1">0</span>
+            <span class="score-divider">-</span>
+            <span id="score-p2">0</span>
+          </div>
+          <div class="timer-box">
+            <span id="match-timer">03:00</span>
+          </div>
+        </div>
+        <div class="team-badge right-team">
+          <span class="team-name" id="hud-p2-name">WHITE</span>
+          <span class="team-color-dot" id="hud-p2-color"></span>
+        </div>
+        <div class="hud-controls">
+          <button id="btn-sound-toggle" class="hud-btn" title="Toggle Sound (M)" aria-label="Toggle Sound">
+            <span class="icon" id="sound-icon">🔊</span>
+          </button>
+          <button id="btn-pause" class="hud-btn" title="Pause Game (ESC / P)" aria-label="Pause Game">
+            <span class="icon">⏸</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Big Center Banners (GOAL, KICKOFF, FULL TIME) -->
+      <div id="announcement-banner" class="banner-container hidden">
+        <div class="banner-box">
+          <h1 id="banner-text" class="banner-title">GOAL!</h1>
+          <p id="banner-subtext" class="banner-sub">BLUE TEAM SCORED!</p>
+        </div>
+      </div>
+
+      <!-- MAIN MENU SCREEN -->
+      <section id="screen-main-menu" class="screen-view active">
+        <div class="menu-card main-menu-card">
+          <div class="logo-container">
+            <div class="logo-sub">ARCADE 1V1 RETRO CUP</div>
+            <h1 class="game-logo">PIXEL FOOTBALL<br><span class="accent-text">SHOWDOWN</span></h1>
+            <div class="animated-ball-mascot">⚽</div>
+          </div>
+
+          <div class="menu-buttons-list">
+            <button id="btn-menu-single" class="pixel-btn btn-primary">
+              <span class="btn-icon">👤</span> 1 PLAYER (VS CPU)
+            </button>
+            <button id="btn-menu-two" class="pixel-btn btn-success">
+              <span class="btn-icon">👥</span> 2 PLAYERS (LOCAL)
+            </button>
+            <button id="btn-menu-how" class="pixel-btn btn-info">
+              <span class="btn-icon">📖</span> HOW TO PLAY
+            </button>
+            <button id="btn-menu-settings" class="pixel-btn btn-secondary">
+              <span class="btn-icon">⚙️</span> SETTINGS
+            </button>
+          </div>
+
+          <footer class="menu-footer">
+            <span>PRESS START OR CLICK TO PLAY</span>
+            <div class="footer-links">
+              <span id="quick-sound-btn" class="clickable-chip">SOUND: <b id="menu-sound-status">ON</b></span>
+              <span id="quick-high-score" class="clickable-chip">BEST WINS: <b id="menu-best-streak">0</b></span>
+            </div>
+          </footer>
+        </div>
+      </section>
+
+      <!-- MATCH SETUP / TEAM SELECTION SCREEN -->
+      <section id="screen-team-select" class="screen-view hidden">
+        <div class="menu-card setup-card">
+          <h2 class="card-heading">MATCH SETUP</h2>
+          <p class="card-subheading" id="setup-mode-label">SINGLE PLAYER MODE</p>
+
+          <div class="setup-grid">
+            <!-- Team 1 Setup -->
+            <div class="team-setup-box" id="p1-setup-box">
+              <h3 class="team-title" id="p1-title-label">PLAYER 1</h3>
+              <div class="preview-avatar-box">
+                <canvas id="p1-preview-canvas" width="64" height="64"></canvas>
+              </div>
+              <label class="control-label">Team Color:</label>
+              <div class="preset-colors" id="p1-colors">
+                <button type="button" class="color-chip active" data-color="#1E88E5" style="background:#1E88E5;" title="Royal Blue"></button>
+                <button type="button" class="color-chip" data-color="#E53935" style="background:#E53935;" title="Crimson Red"></button>
+                <button type="button" class="color-chip" data-color="#FDD835" style="background:#FDD835;" title="Canary Yellow"></button>
+                <button type="button" class="color-chip" data-color="#43A047" style="background:#43A047;" title="Forest Green"></button>
+                <button type="button" class="color-chip" data-color="#8E24AA" style="background:#8E24AA;" title="Cyber Purple"></button>
+              </div>
+              <div class="controls-hint">Controls: <b>W, A, S, D + F</b></div>
+            </div>
+
+            <!-- Match Options in Center -->
+            <div class="match-options-box">
+              <div class="option-group">
+                <label for="select-duration">Match Duration:</label>
+                <select id="select-duration" class="pixel-select">
+                  <option value="60">1 Minute (Blitz)</option>
+                  <option value="120" selected>2 Minutes (Standard)</option>
+                  <option value="180">3 Minutes (Extended)</option>
+                  <option value="300">5 Minutes (Marathon)</option>
+                  <option value="0">Practice (No Timer)</option>
+                </select>
+              </div>
+
+              <div class="option-group" id="difficulty-option-group">
+                <label for="select-difficulty">AI Difficulty:</label>
+                <select id="select-difficulty" class="pixel-select">
+                  <option value="easy">Easy (Rookie)</option>
+                  <option value="medium" selected>Medium (Pro)</option>
+                  <option value="hard">Hard (Legend)</option>
+                </select>
+              </div>
+
+              <div class="option-group">
+                <label for="select-speed">Game Speed:</label>
+                <select id="select-speed" class="pixel-select">
+                  <option value="0.9">Casual (0.9x)</option>
+                  <option value="1.0" selected>Normal (1.0x)</option>
+                  <option value="1.2">Turbo Arcade (1.2x)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Team 2 Setup -->
+            <div class="team-setup-box" id="p2-setup-box">
+              <h3 class="team-title" id="p2-title-label">PLAYER 2 (CPU)</h3>
+              <div class="preview-avatar-box">
+                <canvas id="p2-preview-canvas" width="64" height="64"></canvas>
+              </div>
+              <label class="control-label">Team Color:</label>
+              <div class="preset-colors" id="p2-colors">
+                <button type="button" class="color-chip" data-color="#1E88E5" style="background:#1E88E5;" title="Royal Blue"></button>
+                <button type="button" class="color-chip" data-color="#E53935" style="background:#E53935;" title="Crimson Red"></button>
+                <button type="button" class="color-chip active" data-color="#F5F5F5" style="background:#F5F5F5;" title="Pure White"></button>
+                <button type="button" class="color-chip" data-color="#212121" style="background:#212121;" title="Midnight Black"></button>
+                <button type="button" class="color-chip" data-color="#FB8C00" style="background:#FB8C00;" title="Solar Orange"></button>
+              </div>
+              <div class="controls-hint" id="p2-controls-hint">Controls: <b>Arrow Keys + L</b></div>
+            </div>
+          </div>
+
+          <div class="setup-actions">
+            <button id="btn-back-to-menu" class="pixel-btn btn-secondary">BACK</button>
+            <button id="btn-start-kickoff" class="pixel-btn btn-primary btn-large glow-pulse">START KICKOFF! ⚽</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- HOW TO PLAY SCREEN -->
+      <section id="screen-how-to-play" class="screen-view hidden">
+        <div class="menu-card info-card">
+          <h2 class="card-heading">HOW TO PLAY</h2>
+          <div class="instructions-scroll">
+            <div class="info-columns">
+              <div class="info-col">
+                <h3 class="col-title">PLAYER 1 (LEFT)</h3>
+                <div class="key-guide">
+                  <div class="key-row"><span class="key-badge">W</span> <span class="key-badge">A</span> <span class="key-badge">S</span> <span class="key-badge">D</span> - Move Pitch</div>
+                  <div class="key-row"><span class="key-badge">F</span> - Kick / Shoot (Tap)</div>
+                  <div class="key-row"><span class="key-badge">HOLD F</span> - Charged Power Shot! 🚀</div>
+                  <div class="key-row"><span class="key-badge">SPACE / SHIFT</span> - Sprint Burst ⚡</div>
+                </div>
+              </div>
+              <div class="info-col">
+                <h3 class="col-title">PLAYER 2 (RIGHT)</h3>
+                <div class="key-guide">
+                  <div class="key-row"><span class="key-badge">▲</span> <span class="key-badge">◄</span> <span class="key-badge">▼</span> <span class="key-badge">►</span> - Move Pitch</div>
+                  <div class="key-row"><span class="key-badge">L</span> - Kick / Shoot (Tap)</div>
+                  <div class="key-row"><span class="key-badge">HOLD L</span> - Charged Power Shot! 🚀</div>
+                  <div class="key-row"><span class="key-badge">ENTER / R-SHIFT</span> - Sprint Burst ⚡</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pro-tips-card">
+              <h4>PRO RETRO TACTICS</h4>
+              <ul>
+                <li>⚽ <b>Ball Control:</b> Running into the ball dribbles it softly forward.</li>
+                <li>🎯 <b>Aiming:</b> Shots fly in the direction you are moving or facing.</li>
+                <li>💥 <b>Power Shots:</b> Hold the kick button to charge up a devastating rocket shot that can lift off the pitch!</li>
+                <li>🧱 <b>Bank Shots:</b> The wooden fence at the top can be used to bank passes around defenders!</li>
+                <li>📱 <b>Touch / Mobile:</b> On-screen virtual joystick and action buttons appear automatically on touch devices.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="setup-actions">
+            <button id="btn-how-back" class="pixel-btn btn-primary">GOT IT! BACK TO MENU</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- SETTINGS SCREEN -->
+      <section id="screen-settings" class="screen-view hidden">
+        <div class="menu-card settings-card">
+          <h2 class="card-heading">GAME SETTINGS</h2>
+          
+          <div class="settings-list">
+            <div class="setting-item">
+              <label for="toggle-sound-effect">Sound Effects & Synth Audio:</label>
+              <button id="toggle-sound-effect" class="pixel-toggle active">ENABLED</button>
+            </div>
+            <div class="setting-item">
+              <label for="range-volume">Sound Volume:</label>
+              <input type="range" id="range-volume" min="0" max="100" value="75" class="pixel-slider">
+              <span id="volume-label">75%</span>
+            </div>
+            <div class="setting-item">
+              <label for="toggle-screenshake">Screen Shake & Goal FX:</label>
+              <button id="toggle-screenshake" class="pixel-toggle active">ENABLED</button>
+            </div>
+            <div class="setting-item">
+              <label for="toggle-virtual-pad">Touch Virtual Controls:</label>
+              <button id="toggle-virtual-pad" class="pixel-toggle">AUTO (TOUCH ONLY)</button>
+            </div>
+          </div>
+
+          <div class="setup-actions">
+            <button id="btn-reset-records" class="pixel-btn btn-danger">RESET RECORDS</button>
+            <button id="btn-settings-back" class="pixel-btn btn-primary">SAVE & BACK</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- PAUSE OVERLAY -->
+      <div id="pause-modal" class="modal-overlay hidden">
+        <div class="menu-card modal-card">
+          <h2 class="modal-title">MATCH PAUSED</h2>
+          <div class="modal-buttons">
+            <button id="btn-pause-resume" class="pixel-btn btn-success">▶ RESUME</button>
+            <button id="btn-pause-restart" class="pixel-btn btn-warning">🔄 RESTART MATCH</button>
+            <button id="btn-pause-sound" class="pixel-btn btn-info">🔊 SOUND: ON</button>
+            <button id="btn-pause-quit" class="pixel-btn btn-danger">🚪 MAIN MENU</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MATCH OVER / RESULTS SCREEN -->
+      <div id="results-modal" class="modal-overlay hidden">
+        <div class="menu-card results-card">
+          <div class="trophy-icon">🏆</div>
+          <h2 id="results-title" class="results-header">MATCH COMPLETED</h2>
+          <p id="results-winner" class="results-sub">BLUE TEAM WINS!</p>
+
+          <div class="final-scoreline">
+            <div class="team-result-box left">
+              <span class="res-team-name" id="res-p1-name">BLUE</span>
+              <span class="res-score" id="res-p1-score">3</span>
+            </div>
+            <span class="res-vs">VS</span>
+            <div class="team-result-box right">
+              <span class="res-score" id="res-p2-score">1</span>
+              <span class="res-team-name" id="res-p2-name">WHITE</span>
+            </div>
+          </div>
+
+          <div class="match-stats-table">
+            <div class="stat-row">
+              <span id="stat-p1-shots">8</span>
+              <span class="stat-name">Total Shots</span>
+              <span id="stat-p2-shots">4</span>
+            </div>
+            <div class="stat-row">
+              <span id="stat-p1-target">5</span>
+              <span class="stat-name">Shots on Goal</span>
+              <span id="stat-p2-target">2</span>
+            </div>
+            <div class="stat-row">
+              <span id="stat-p1-possession">58%</span>
+              <span class="stat-name">Possession</span>
+              <span id="stat-p2-possession">42%</span>
+            </div>
+            <div class="stat-row">
+              <span id="stat-p1-saves">2</span>
+              <span class="stat-name">Goal Saves</span>
+              <span id="stat-p2-saves">3</span>
+            </div>
+          </div>
+
+          <div class="modal-buttons horizontal">
+            <button id="btn-results-rematch" class="pixel-btn btn-primary">🔄 PLAY AGAIN</button>
+            <button id="btn-results-menu" class="pixel-btn btn-secondary">🏠 MAIN MENU</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MOBILE / TOUCH VIRTUAL CONTROLS -->
+      <div id="mobile-controls-layer" class="mobile-controls hidden">
+        <!-- Player 1 Touch Joystick / D-Pad on Left -->
+        <div id="touch-dpad" class="touch-zone dpad-zone">
+          <div class="dpad-center"></div>
+          <button class="dpad-btn dpad-up" data-dir="up">▲</button>
+          <button class="dpad-btn dpad-down" data-dir="down">▼</button>
+          <button class="dpad-btn dpad-left" data-dir="left">◄</button>
+          <button class="dpad-btn dpad-right" data-dir="right">►</button>
+        </div>
+
+        <!-- Player 1 Touch Action Buttons on Right -->
+        <div id="touch-action-buttons" class="touch-zone action-zone">
+          <button id="btn-touch-sprint" class="touch-btn sprint-btn">
+            <span>DASH</span>
+          </button>
+          <button id="btn-touch-kick" class="touch-btn kick-btn">
+            <span>KICK</span>
+            <div class="touch-charge-fill" id="touch-kick-charge"></div>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Game Scripts Modular Load -->
+  <script src="js/audio.js"></script>
+  <script src="js/physics.js"></script>
+  <script src="js/ball.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/controls.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
